@@ -1,14 +1,18 @@
 class CaesarCipher {
-  process(str, shiftAmount, encode) {
+  constructor(shiftAmount, encode) {
+    this.shiftAmount = shiftAmount;
+    this.encode = encode;
+  }
+  process(str) {
     this.result = "";
 
-    shiftAmount = shiftAmount % 26;
+    this.shiftAmount = this.shiftAmount % 26;
 
     for (let i = 0; i < str.length; i++) {
       let letter = str[i];
 
       if (/[a-z]/i.test(letter)) {
-        letter = this.getTransformedLetter(letter.charCodeAt(0), shiftAmount, encode)
+        letter = this.getTransformedLetter(letter.charCodeAt(0))
       }
 
       this.result += letter;
@@ -17,15 +21,15 @@ class CaesarCipher {
     return this.result;
   }
 
-  getTransformedLetter(letterCode, shiftNumber, encode) {
+  getTransformedLetter(letterCode) {
 
     const getNewCode = (balanceNumber) => {
       let newCode = 0;
 
-      if (encode) {
-        newCode = letterCode - balanceNumber + shiftNumber;
+      if (this.encode) {
+        newCode = letterCode - balanceNumber + this.shiftAmount;
       } else {
-        newCode = letterCode - balanceNumber - shiftNumber;
+        newCode = letterCode - balanceNumber - this.shiftAmount;
       }
 
       newCode = ((newCode % 26) + 26) % 26;
