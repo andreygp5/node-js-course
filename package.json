@@ -1,0 +1,25 @@
+{
+  "name": "caesar-cipher-cli-tool",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bin/index.js",
+  "bin": {  
+    "my_caesar_cli": "./bin/index.js"  
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andreygp5/node-js-course.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/andreygp5/node-js-course/issues"
+  },
+  "homepage": "https://github.com/andreygp5/node-js-course#readme",
+  "dependencies": {
+    "commander": "^7.2.0"
+  }
+}
