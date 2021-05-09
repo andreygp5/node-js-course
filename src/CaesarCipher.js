@@ -6,6 +6,13 @@ class CaesarCipher {
   process(str) {
     this.result = "";
 
+    /* Handle negative shift */
+    if (this.shiftAmount < 0) {
+      this.encode = !this.encode;
+      this.shiftAmount = Math.abs(this.shiftAmount);
+      return this.process(str);
+    }
+
     this.shiftAmount = this.shiftAmount % 26;
 
     for (let i = 0; i < str.length; i++) {

@@ -8,7 +8,7 @@ const { pipeline } = require('stream');
 
 const { CaesarCipher } = require('../src/CaesarCipher');
 const { CounterTransform } = require('../src/streams');
-
+const { checkCorrectAction, checkFileExistence } = require('../src/checks');
 
 program
   .requiredOption('-a, --action <action-type>', 'specify what to do with input (encode or decode)')
@@ -18,6 +18,7 @@ program
 
 program.parse(process.argv);
 
+/* Get cli options */
 const options = program.opts();
 
 let inputPath = options.input;
@@ -25,55 +26,80 @@ let outputPath = options.output;
 let action = options.action;
 let shiftAmount = options.shift;
 
+/* Create std streams */
+const stdin = process.stdin;
+const stdout = process.stdout;
+const stderr = process.stderr;
+
+/* Check correct cli input */
 if (!checkCorrectAction(options.action)) {
-  console.log("Not valid action. Possible actions - encode, decode");
-  process.exit()
+  stderr.write("Not valid action. Possible actions - encode, decode");
+  process.exit(1)
 };
 
-if (inputPath && outputPath) {
-  checkCorrectPaths([path.resolve(inputPath), path.resolve(outputPath)]);
-};
+if (inputPath) {
+  if (!checkFileExistence(inputPath)) {
+    stderr.write(`${inputPath} - doesn't exist`);
+    process.exit(1)
+  }
+}
 
-const readableStream = fs.createReadStream(path.resolve(inputPath));
-const writeableStream = fs.createWriteStream(path.resolve(outputPath), {
-  flags: "a",
-});
+if (outputPath) {
+  if (!checkFileExistence(outputPath)) {
+    stderr.write(`${outputPath} - doesn't exist`);
+    process.exit(1)
+  }
+}
+
+/* Create cypher machine */
 const counterTransform = new CounterTransform();
-
 counterTransform.setCypherMachine(new CaesarCipher(shiftAmount, action === "encode" ? true : false));
 
-pipeline(readableStream, counterTransform, writeableStream,
-  (res) => {
-    console.log(res);
-  })
+if (inputPath && outputPath) {
+  const readableStream = fs.createReadStream(path.resolve(inputPath));
+  const writeableStream = fs.createWriteStream(path.resolve(outputPath), {
+    flags: "a",
+  });
 
-function checkCorrectAction(action) {
-  const possibleActions = ["encode", "decode"];
+  pipeline(
+    readableStream,
+    counterTransform,
+    writeableStream,
+    (res) => {
+      console.log(res);
+    }
+  )
+} else if (!inputPath && !outputPath) {
+  pipeline(
+    stdin,
+    counterTransform,
+    stdout,
+    (res) => {
+      console.log(res);
+    }
+  )
+} else if (inputPath) {
+  const readableStream = fs.createReadStream(path.resolve(inputPath));
 
-  if (!possibleActions.includes(action)) return false;
+  pipeline(
+    readableStream,
+    counterTransform,
+    stdout,
+    (res) => {
+      console.log(res);
+    }
+  )
+} else if (outputPath) {
+  const writeableStream = fs.createWriteStream(path.resolve(outputPath), {
+    flags: "a",
+  });
 
-  return true;
-}
-
-function checkCorrectPaths(paths) {
-  paths.forEach((filePath) => {
-    filePath = path.resolve(filePath);
-    fs.access(filePath, (err) => {
-      if (err) {
-        console.log(`${filePath} - doesn't exist`);
-        process.exit();
-      }
-    });
-    fs.lstat(filePath, (err, stats) => {
-      if (err) {
-        console.log(`Problems with - ${filePath}`);
-        process.exit();
-      } else {
-        if (!stats.isFile()) {
-          console.log(`${filePath} - isn't a file`);
-          process.exit();
-        }
-      }
-    })
-  })
-}
+  pipeline(
+    stdin,
+    counterTransform,
+    writeableStream,
+    (res) => {
+      console.log(res);
+    }
+  )
+};
